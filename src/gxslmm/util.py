@@ -55,6 +55,16 @@ def isPD(B):
     except la.LinAlgError:
         return False
 
+def buildchol(skernel):
+
+    if isPD(skernel) is False:
+        # skernel_nearPD = cov_nearest(skernel) # too slow
+        skernel_nearPD = nearestPD(skernel)
+        chol_skernel = np.linalg.cholesky(skernel_nearPD)
+    else:
+        chol_skernel = np.linalg.cholesky(skernel)
+
+    return chol_skernel
 
 # if __name__ == '__main__':
 #     import numpy as np

@@ -5,10 +5,7 @@ from sklearn.preprocessing import scale
 from statsmodels.nonparametric.bandwidths import select_bandwidth
 from statsmodels.sandbox.nonparametric import kernels
 
-from .util import isPD, nearestPD
-
 # from statsmodels.stats.correlation_tools import cov_nearest
-
 
 def cal_bandwidth(expr, bw_method="silverman"):
 
@@ -22,7 +19,7 @@ def cal_bandwidth(expr, bw_method="silverman"):
 
     return bw
 
-
+# we can select the method 1) normal_reference, 2) scott, 3) silverman
 def bandwidth_select(expr, method="silverman"):
 
     tot_bw = []
@@ -38,17 +35,43 @@ def bandwidth_select(expr, method="silverman"):
     return median_bw
 
 
-def cal_kernel(coord, bandwidth):
+# Thsi function is the same as the 'dist' function in r
+def dist(coord):
+    d = np.sqrt(np.sum((coord[:, np.newaxis, :] - coord[np.newaxis, :, :]) ** 2, axis=-1))
+    return(d)
 
-    pairwise_sq_dists = np.sum(
-        (coord[:, np.newaxis, :] - coord[np.newaxis, :, :]) ** 2, axis=-1
-    )
-    kernelmat = np.exp(-1 * pairwise_sq_dists / bandwidth)
+
+# please check the mellon paper.
+# https://mellon.readthedocs.io/en/latest/cov.html#mellon.cov.Matern52
+def cal_kernel(coord, bandwidth, method):
+    
+    # Exponentiated Quadratic kernel, also known as the squared exponential or the Gaussian kernel.
+    if method == "gaussian":
+      r = dist(coord) / bandwidth
+      kernelmat = np.exp(-(r ** 2) / 2)
+
+    # Implementation of the Matern-5/2 kernel function, a member of the Matern family of kernels.  
+    elif method == "matern52":
+      r = np.sqrt(5.0) * dist(coord) / bandwidth
+      kernelmat = (r + (r ** 2) / 3 + 1) * np.exp(-r)
+      
+    # Implementation of the Matern-3/2 kernel function, a member of the Matern family of kernels.  
+    elif method == "matern32":
+      r = np.sqrt(3.0) * dist(coord) / bandwidth
+      kernelmat = (r + 1) * np.exp(-r)
+    
+    # Rational Quadratic kernel function
+    elif method == "ratquad":
+      alpha = 1
+      r = dist(coord) / bandwidth
+      kernelmat = ((r ** 2) / (2 * alpha) + 1) ** -alpha
+    else :
+      print(" Please select 'gaussian', 'matern52', 'matern32', 'ratquad'")
 
     return kernelmat
 
 
-def spatialkernel(expr, coord, bandwidthtype="silverman", userbandwidth=None):
+def spatialkernel(expr, coord, bandwidthtype="silverman", method = "matern52", userbandwidth=None):
 
     # Standardization
     # print("# Scale the expression of each gene.")
@@ -64,18 +87,6 @@ def spatialkernel(expr, coord, bandwidthtype="silverman", userbandwidth=None):
 
     # Calculate the kernel matrix using the bandwidth
     coord_normalized = scale(coord)
-    kernelmat = cal_kernel(coord=coord_normalized, bandwidth=bandwidth)
+    kernelmat = cal_kernel(coord=coord_normalized, method=method, bandwidth=bandwidth)
 
     return kernelmat
-
-
-def buildchol(skernel):
-
-    if isPD(skernel) is False:
-        # skernel_nearPD = cov_nearest(skernel) # too slow
-        skernel_nearPD = nearestPD(skernel)
-        chol_skernel = np.linalg.cholesky(skernel_nearPD)
-    else:
-        chol_skernel = np.linalg.cholesky(skernel)
-
-    return chol_skernel
