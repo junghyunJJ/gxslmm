@@ -7,25 +7,25 @@ from statsmodels.sandbox.nonparametric import kernels
 
 # from statsmodels.stats.correlation_tools import cov_nearest
 
-def cal_bandwidth(expr, bw_method="silverman"):
+def cal_bandwidth(exprs, bw_method="silverman"):
 
     # https://www.statsmodels.org/dev/_modules/statsmodels/nonparametric/bandwidths.html#select_bandwidth
-    bw = select_bandwidth(expr, bw=bw_method, kernel=kernels.Gaussian())
+    bw = select_bandwidth(exprs, bw=bw_method, kernel=kernels.Gaussian())
 
     # https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html#scipy.stats.gaussian_kde
     # import scipy.stats as stats
     # from scipy.stats import gaussian_kde
-    # bw = stats.gaussian_kde(expr, bw_method = bw_method).factor
+    # bw = stats.gaussian_kde(exprs, bw_method = bw_method).factor
 
     return bw
 
 # we can select the method 1) normal_reference, 2) scott, 3) silverman
-def bandwidth_select(expr, method="silverman"):
+def bandwidth_select(exprs, method="silverman"):
 
     tot_bw = []
-    for i in range(expr.shape[0]):
+    for i in range(exprs.shape[0]):
         try:
-            res_bw = cal_bandwidth(expr[i], bw_method=method)
+            res_bw = cal_bandwidth(exprs[i], bw_method=method)
             tot_bw.append(res_bw)
         except Exception as e:
             print(f"Gene {i} : {str(e)}")
@@ -71,15 +71,15 @@ def cal_kernel(coord, bandwidth, method):
     return kernelmat
 
 
-def spatialkernel(expr, coord, bandwidthtype="silverman", method = "matern52", userbandwidth=None):
+def spatialkernel(exprs, coord, bandwidthtype="silverman", method = "matern52", userbandwidth=None):
 
     # Standardization
-    # print("# Scale the expression of each gene.")
-    expr = scale(expr, axis=1)
+    # print("# Scale the exprsession of each gene.")
+    exprs = scale(exprs, axis=1)
 
     # Calculate bandwidth
     if userbandwidth is None:
-        bandwidth = bandwidth_select(expr, method=bandwidthtype)
+        bandwidth = bandwidth_select(exprs, method=bandwidthtype)
         print(f"# The bandwidth is {round(bandwidth, 4)} using {bandwidthtype}.")
     else:
         bandwidth = userbandwidth

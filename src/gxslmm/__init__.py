@@ -15,5 +15,7 @@ except PackageNotFoundError:  # pragma: no cover
 finally:
     del version, PackageNotFoundError
 
-from .run import gxslmm
-from .buildkernel import buildchol, spatialkernel
+from .run import *
+from .expand import *
+from .buildkernel import *
+from .util import *

@@ -106,17 +106,18 @@ cal_kernel <- function(coord, bandwidth, method = "matern52") {
 }
 
 
-spatialkernel <- function(exp, coord, bandwidthtype = "Silverman", method = "matern52", userbandwidth = NULL, ncores = 1) {
+spatialkernel <- function(exp = NULL, coord, bandwidthtype = "Silverman", method = "matern52", userbandwidth = NULL, ncores = 1) {
 
   # Please check the deim for exp and coord
   stopifnot()
 
-  # 1. standadization
-  # cat(paste0("## Scale the expression of each gene. \n"))
-  expr <- t(scale(t(exp)))
 
   # 2. cal bandwidth
   if (is.null(userbandwidth)) {
+    # 1. standadization
+    # cat(paste0("## Scale the expression of each gene. \n"))
+    expr <- t(scale(t(exp)))
+
     bandwidth <- bandwidth_select(expr, method = bandwidthtype)
     cat(paste0("## The bandwidth is: ", round(bandwidth, 3), " using", bandwidthtype, " \n"))
   } else {
